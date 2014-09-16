@@ -1,12 +1,20 @@
+var Content = require('./content');  
 
 module.exports = exports = function(en) {
+"use strict";
+    
+    var contentHandler = new Content(en);
 
+    var db  = en.db;
+    var app = en.app;
+    var log = en.logger;
+    
     /* CHAT URL */
-    en.app.get('/chatapi', function(req, res, next) {
+    app.get('/chatapi', function(req, res, next) {
         res.send(en.CONSTANTS.WEBSOCKET_URL);
     });
         
-    en.app.get('/fakesession', function(req, res, next) {
+    app.get('/fakesession', function(req, res, next) {
         
         var sess = req.session;
         
@@ -23,5 +31,10 @@ module.exports = exports = function(en) {
         console.log(sess);
         
         res.send(sess);
-    });    
+    });
+    
+    console.log(contentHandler);
+    
+    app.post('/login', contentHandler.login);
+    app.post('/register', contentHandler.register);
 };
