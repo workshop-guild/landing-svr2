@@ -1,0 +1,36 @@
+body { 
+background-color : black;
+}
+
+.main {
+color: #d0f8ce ;
+}
+
+.chat-main {
+    position: absolute; 
+    width: 98%; 
+    height: 85%; 
+    border: 2px solid #056f00; 
+    border-top-left-radius: 7px; 
+    border-top-right-radius: 7px; 
+    border-bottom-right-radius: 7px; 
+    border-bottom-left-radius: 7px; 
+    overflow: auto;
+    font-family: 'helvetica neue';
+}
+
+.chat-input {
+    position: absolute; 
+    width: 98%; 
+    height: 5%; 
+	color : #f48fb1;
+    background-color : black;
+    border: 2px solid #056f00; 
+    border-top-left-radius: 7px; 
+    border-top-right-radius: 7px; 
+    border-bottom-right-radius: 7px; 
+    border-bottom-left-radius: 7px; 
+    top: 88%;
+    font-family: 'helvetica neue';
+    font-size: 1.1em;
+}
