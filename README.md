@@ -5,7 +5,7 @@ Do Fork.
 
 Requirement
 ====
----
+
 nodejs 0.10.x and above
 mongodb 2.6 and above
 redis 2.8 and above
@@ -21,8 +21,28 @@ redis 2.8 and above
 
 How to Start
 =============
----
+
 Fire up your command line
 npm install -g nodemon
 npm install
 nodemon app.js
+
+
+API
+====
+
+__GET /login__
+
+__@param__
+
+_email_
+
+_password_
+
+__POST /register__
+
+__@param__
+
+_email_
+
+_password_

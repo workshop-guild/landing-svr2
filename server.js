@@ -50,6 +50,18 @@ var CONSTANTS = {
     VIEWS_DIR : VIEWS_DIR
 };
 
+var HTTP_CODE = {
+    BAD_REQUEST  : 400,
+    UNAUTHORIZED : 401,
+    FORBIDDEN    : 403,
+    NOT_FOUND    : 404,
+    ERROR        : 500
+}
+
+var STATUS_CODE = {    
+    OK    : 0,
+    ERROR : 1
+};
 
 var ERROR_CODE = {
     OK : 0,
@@ -68,18 +80,25 @@ function getDataDir()
 
 var Logger = (function _CreateLogger() {
     
+    function toJson(msg) {
+        if ( typeof msg === 'object' ) {
+            return JSON.stringify(msg, undefined, 2);   
+        }
+        return msg;
+    }
+    
     return {
         info : function (msg) {
-            console.log("[%s] [INFO] %s", Timestamp(), msg);
+            console.log("[%s] [INFO] %s", Timestamp(), toJson(msg));
         },
         debug : function (msg) {
-            console.log("[%s] [DEBUG] %s", Timestamp(), msg);
+            console.log("[%s] [DEBUG] %s", Timestamp(), toJson(msg));
         },
         warn : function (msg) {
-            console.log("[%s] [WARNING] %s", Timestamp(), msg);
+            console.log("[%s] [WARNING] %s", Timestamp(), toJson(msg));
         },
         error : function (msg) {
-            console.log("[%s] [ERROR] %s", Timestamp(), msg);
+            console.log("[%s] [ERROR] %s", Timestamp(), toJson(msg));
         },        
     };
     
@@ -89,7 +108,9 @@ var Logger = (function _CreateLogger() {
     
     var engine = {};
     
-    engine.CONSTANTS = CONSTANTS;
+    engine.CONSTANTS    = CONSTANTS;
+    engine.STATUS_CODE = STATUS_CODE;
+    engine.HTTP_CODE    = HTTP_CODE;
     
     return new Promise(function ( ok, fail ) {
         mongodb.connect(SERVER_ENV.db_url, function(err, db) {                   
@@ -163,6 +184,11 @@ var Logger = (function _CreateLogger() {
 
         app.use('/', express.static(VIEWS_DIR));
 
+        // POST middleware
+        app.use(bodyParser.json());       // to support JSON-encoded bodies
+        app.use(bodyParser.urlencoded()); // to support URL-encoded bodies   
+            
+        
         // session vanilla
         //app.use(session({
         //  genid: function(req) {
