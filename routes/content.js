@@ -65,6 +65,8 @@ var crypto = require('crypto');
         var password = post.password;
         var session = req.session;
 
+        var hashed_pass = _saltedhash(email, password);
+        
         console.log('ip ' + client_ip);
         log.info('user ip: ' + client_ip);
         log.info('--post body--');
@@ -85,13 +87,13 @@ var crypto = require('crypto');
 
         players.findOne( query, fields, function (err, doc) {
 
-            var enterPass = password;
+            
 
             if (err) return res.status(500).send({'status' : en.STATUS_CODE.ERROR, 'errorno' : err})
 
             if (!doc) return res.status(404).send({'status' : en.STATUS_CODE.ERROR, 'errorno' : 'user not found or wrong credentials'});
 
-            if (doc.password != enterPass) {
+            if (doc.password != hashed_pass) {
                 console.log(doc);
                 res.status(401).send({'status' : en.STATUS_CODE.ERROR, 'errorno' : 'wrong password'});
             }
