@@ -17,6 +17,7 @@ var fs = require('fs'),
     Promise = require('promise'),
     redis  = require("redis"),
     uuid = require('node-uuid'),
+    cors = require('cors'),
     socketIO = require('socket.io');
 
 //-- local libs --//
@@ -24,6 +25,8 @@ var SERVER_ENV = require(__dirname + '/env.json'),
     routes = require(__dirname + '/routes');
 
 var app = express();
+
+app.use(cors());
 
 var ipaddress  = process.env.OPENSHIFT_NODEJS_IP     || SERVER_ENV.web_url;
 var port       = process.env.OPENSHIFT_NODEJS_PORT   || SERVER_ENV.web_port;

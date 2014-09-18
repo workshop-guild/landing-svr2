@@ -25,6 +25,7 @@ How to Start
 In the project folder up your command line
 ```
 npm install -g nodemon
+
 npm install
 nodemon server.js
 ```
