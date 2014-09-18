@@ -22,11 +22,12 @@ redis 2.8 and above
 How to Start
 =============
 
-Fire up your command line
+In the project folder up your command line
+```
 npm install -g nodemon
 npm install
-nodemon app.js
-
+nodemon server.js
+```
 
 API
 ====

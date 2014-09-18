@@ -41,7 +41,7 @@ var crypto = require('crypto');
         players.insert( player, { w : 1 }, function(err, document) {
             if (err) {
                 log.info('error in registering profile: ' + err);   
-                res.status(en.HTTP_CODE.ERROR).send({'status' : en.STATUS_CODE.ERROR});
+                res.status(en.HTTP_CODE.FORBIDDEN).send({'status' : en.STATUS_CODE.ERROR, 'errorno' : err});
             }
             else {
               log.debug(document[0]);
