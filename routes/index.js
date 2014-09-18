@@ -1,8 +1,7 @@
 var Content = require('./content');  
 
 module.exports = exports = function(en) {
-"use strict";
-    
+"use strict";    
     var contentHandler = new Content(en);
 
     var db  = en.db;
@@ -15,7 +14,6 @@ module.exports = exports = function(en) {
     });
         
     app.get('/fakesession', function(req, res, next) {
-        
         var sess = req.session;
         
         if (!sess.visits) {
@@ -36,5 +34,7 @@ module.exports = exports = function(en) {
     console.log(contentHandler);
     
     app.post('/login', contentHandler.login);
-    app.post('/register', contentHandler.register);
+    app.post('/register', contentHandler.register);    
+    app.post('/upload', contentHandler.upload);  
+    
 };
