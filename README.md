@@ -23,8 +23,11 @@ How to Start
 =============
 
 Fire up your command line
+
 npm install -g nodemon
+
 npm install
+
 nodemon app.js
 
 
