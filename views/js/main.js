@@ -62,3 +62,29 @@ $(document).keypress(function(e) {
     }
 });
 
+
+
+Dropzone.autoDiscover = false;
+var fileDrop = new Dropzone("#chat-main",
+    { url: "/upload"}                             
+);
+
+fileDrop.on("addedfile", function(file) {
+    /* Maybe display some more file information on your page */
+    console.log('file added');
+});        
+
+fileDrop.on("uploadprogress", function(file, progress, bytes) {
+    /* Maybe display some more file information on your page */
+    console.log('uploadprogress');
+    console.log('progress:'+progress);
+    console.log('bytes:'+progress);
+});         
+
+
+fileDrop.on('totaluploadprogress', function(a,b) {
+    console.log('totaluploadprogress');
+    console.log('progress-a:'+a);
+    console.log('progress-b:'+b);
+});
+
