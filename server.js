@@ -92,6 +92,7 @@ function parseSessionID(cookie) {
             return cookieParser.signedCookie(signedStr, SESSION_SECRET)
         }
     }
+    
 }
 
 
@@ -219,11 +220,14 @@ var Logger = (function _CreateLogger() {
 
         // Set up session_id on request
         app.use(function (req, res, next) {
+            Logger.debug('Checking Session');
             if (!req.session) {
                 Logger.error('Redis Session Not Found!');
             }
-
-            req.session.id = en.parseSessionID(req.headers.cookie);
+            Logger.debug(req.headers);
+            if (req.headers.cookie) {
+                req.session.id = en.parseSessionID(req.headers.cookie);
+            }
             next();
         });
 
