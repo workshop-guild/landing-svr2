@@ -34,12 +34,15 @@ var redis_host = process.env.OPENSHIFT_REDIS_DB_HOST || SERVER_ENV.redis_host;
 var redis_port = process.env.OPENSHIFT_REDIS_DB_PORT || SERVER_ENV.redis_port;
 var redis_pwd  = process.env.OPENSHIFT_REDIS_DB_PASSWORD;
 
-var data_dir  = process.env.OPENSHIFT_DATA_DIR || __dirname + '/views/user';
-var PROFILE_URL_ROOT   = '/userdata';
+var data_dir   = process.env.OPENSHIFT_DATA_DIR || __dirname + '/data';
+var PROFILE_URL_ROOT   = '/profile';
 var SERVER_PUBLIC_ADDR = 'http://' + SERVER_ENV.web_url + ':' + port;
 var WEBSOCKET_URL      = 'http://' + SERVER_ENV.web_url + ':' + SERVER_ENV.websock_port;
 
+var URL_ROOT = '/';
+var DATA_URL =  URL_ROOT + 'data';
 var VIEWS_DIR = __dirname + '/views';
+var SESSION_SECRET = 'xx==abyss==xx';
 
 var CONSTANTS = {
     SERVER_IP   : ipaddress,
@@ -50,7 +53,9 @@ var CONSTANTS = {
     PROFILE_URL_ROOT : PROFILE_URL_ROOT,
     SERVER_PUBLIC_ADDR : SERVER_PUBLIC_ADDR,
     WEBSOCKET_URL : WEBSOCKET_URL,
-    VIEWS_DIR : VIEWS_DIR
+    VIEWS_DIR : VIEWS_DIR,
+    URL_ROOT : URL_ROOT,
+    DATA_URL : DATA_URL
 };
 
 var HTTP_CODE = {
@@ -76,10 +81,19 @@ function Timestamp()
     return moment().format("YYYY-MM-DD HH:mm:ss");
 }
 
-function getDataDir()
-{
-    return data_dir + '/';
+function parseSessionID(cookie) {
+    var items = cookie.split(' ');
+    for (var i in items) {
+        var decoded   = unescape(items[i]);
+        var index = decoded.indexOf('connect.sid=s:');
+        if ( index != -1) {
+            var signedStr = decoded.substring(index + 'connect.sid='.length, decoded.length);
+            console.log('signed: ' + signedStr);
+            return cookieParser.signedCookie(signedStr, SESSION_SECRET)
+        }
+    }
 }
+
 
 var Logger = (function _CreateLogger() {
 
@@ -114,6 +128,8 @@ var Logger = (function _CreateLogger() {
     engine.CONSTANTS    = CONSTANTS;
     engine.STATUS_CODE = STATUS_CODE;
     engine.HTTP_CODE    = HTTP_CODE;
+
+    engine.parseSessionID = parseSessionID;
 
     return new Promise(function ( ok, fail ) {
         mongodb.connect(SERVER_ENV.db_url, function(err, db) {
@@ -185,35 +201,30 @@ var Logger = (function _CreateLogger() {
 
         Logger.info('Setting up statics and app.use');
 
-        app.use('/', express.static(VIEWS_DIR));
+        app.set('trust proxy', true);
+
+        app.use(URL_ROOT, express.static(VIEWS_DIR));
+        app.use(DATA_URL, express.static(data_dir));
 
         // POST middleware
         app.use(bodyParser.json());       // to support JSON-encoded bodies
         app.use(bodyParser.urlencoded()); // to support URL-encoded bodies
 
 
-        // session vanilla
-        //app.use(session({
-        //  genid: function(req) {
-        //    return uuid.v1(); // use UUIDs for session IDs
-        //  },
-        //  secret: 'xx==abyss==xx'
-        //}))
+        // Session Middleware
         app.use(session({
-            store: new RedisStore({host : redis_host, port: redis_port}),
-            secret: 'xx==abyss==xx'
+            store: new RedisStore({host : redis_host, port: redis_port})
+            , secret: SESSION_SECRET
         }));
 
-        // checks valid session
+        // Set up session_id on request
         app.use(function (req, res, next) {
-
-            console.log('checking session on redis');
-            console.log(req.session);
-
             if (!req.session) {
-            return next(new Error('no redis session')); // handle error
+                Logger.error('Redis Session Not Found!');
             }
-            next(); // otherwise continue
+
+            req.session.id = en.parseSessionID(req.headers.cookie);
+            next();
         });
 
         ok(en);
@@ -224,9 +235,11 @@ var Logger = (function _CreateLogger() {
 
     Logger.info('Starting Main');
 
+    en.loadSession = en.redis_main.get;
+
     routes(en);
 
-    en.redis_main.flushall();
+    //en.redis_main.flushall();
     en.redis_main.set('online', 0);
 
     en.redis_sub.subscribe('global');
@@ -258,7 +271,19 @@ var Logger = (function _CreateLogger() {
 
     en.io = io;
 
+    // Create and Store Session CookieID
+    io.use(function(socket, next) {
+        Logger.debug('-------io handshake-----------');
+        var sessionID = parseSessionID(socket.request.headers.cookie);
+        console.log(socket.request.headers);
+        socket.session_id = sessionID;
+        next();
+    });
+
+
     io.on('connection', function(socket){
+
+        console.log('Socket SesssionID: ' + socket.session_id);
 
         var userid = murmurhash.v3(socket.id);
         var username = 'agent-' + userid;
