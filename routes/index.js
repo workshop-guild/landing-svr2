@@ -1,5 +1,7 @@
 var Content = require('./content');
 
+var urls = require('../urls.json');
+
 module.exports = exports = function(en) {
 "use strict";
     var contentHandler = new Content(en);
@@ -51,4 +53,12 @@ module.exports = exports = function(en) {
     app.post('/register', contentHandler.register);
     app.post('/upload', contentHandler.upload);
 
+    app.get('/navigate/:item', function(req, res){
+        console.log(req.param('item'));
+        var redir = urls[req.param('item')];
+        if ( redir ){
+            res.status(en.HTTP_CODE.OK).redirect(redir);
+        }
+        res.status(en.HTTP_CODE.NOT_FOUND).send('404');
+    });
 };
