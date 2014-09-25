@@ -222,7 +222,10 @@ var Logger = (function _CreateLogger() {
 
         // Set up session_id on request
         app.use(function (req, res, next) {
-            Logger.debug('Checking Session');
+            req.session.reload(function(err){
+                Logger.debug('Session Reload ' + err);
+                Logger.debug(req.session);
+            });
             if (!req.session) {
                 Logger.error('Redis Session Not Found!');
             }
