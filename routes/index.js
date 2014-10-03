@@ -61,4 +61,8 @@ module.exports = exports = function(en) {
         }
         res.status(en.HTTP_CODE.NOT_FOUND).send('404');
     });
+
+    // mount the API router
+    var api = require('../api')(en);
+    app.use('/api', api);
 };
