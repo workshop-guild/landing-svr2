@@ -10,7 +10,7 @@ module.exports = function(en){ // pass in the nodeapp engine
   var router = express.Router();
 
   router.use(function(req, res, next){
-    req.db = db;
+    req.en = en;
     next();
   });
 
@@ -31,7 +31,7 @@ module.exports = function(en){ // pass in the nodeapp engine
       var stat = fs.statSync(modulePath);
       if ( stat && stat.isDirectory() ){
         var mountPath = '/' + v + '/' + modName;
-        console.log('Mounting at ' + mountPath + ' from ' + modulePath);
+        log.info('API - Mounting at ' + mountPath + ' from ' + modulePath);
         router.use(mountPath, require(modulePath));
       }
     });

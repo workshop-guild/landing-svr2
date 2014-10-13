@@ -37,6 +37,9 @@
   "license": "Free",
   "devDependencies": {
     "chai": "*",
+    "grunt": "^0.4.5",
+    "grunt-apidoc": "^0.7.0",
+    "load-grunt-tasks": "^0.6.0",
     "mocha": "*"
   }
 }

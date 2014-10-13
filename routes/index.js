@@ -47,7 +47,7 @@ module.exports = exports = function(en) {
         res.send(sess);
     });
 
-    console.log(contentHandler);
+    // console.log(contentHandler);
 
     app.post('/login', contentHandler.login);
     app.post('/register', contentHandler.register);

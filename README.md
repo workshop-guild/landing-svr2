@@ -48,3 +48,14 @@ __@param__
 _email_
 
 _password_
+
+```
+// generate api documentation
+grunt apidoc
+```
+
+```
+// serve the api docs locally at PORT
+npm install -g http-server // or you can use any variant actually...
+http-server -p PORT apidoc
+```
