@@ -3,28 +3,11 @@ var ObjectID = require('mongodb').ObjectID;
 var fs = require('fs');
 var murmurhash = require('murmurhash');
 var multiparty = require('multiparty');
+var expressValidator = require('express-validator');
 
 var router = express.Router();
 
-var parsePostData = function(req, res, next){ // to support multipart/form-data
-  if ( req.method !== 'POST') next();
-  if ( req.is('multipart/form-data') ){
-    var form = new multiparty.Form({
-        uploadDir: req.en.CONSTANTS.DATA_DIR
-    });
-    form.parse(req, function(err, fields, files){
-        req.body = req.body || {};
-        req.files = req.files || {};
-        Object.keys(fields).forEach(function(key){
-            req.body[key] = fields[key][0];
-        });
-        Object.keys(files).forEach(function(key){
-            req.files[key] = files[key][0];
-        });
-        next();
-    });
-  }
-};
+var postDataValidator = expressValidator();
 
 /**
  * @api {get} /users/:user_id Find
@@ -41,7 +24,6 @@ var parsePostData = function(req, res, next){ // to support multipart/form-data
  * @apiSuccess {String} role
  * @apiSuccess {String} avatarURL
  */
-function berp(){};
 router.get('/:user_id', function(req, res){
   var id = ObjectID(req.params.user_id);
   req.en.db.collection('users').findOne({ _id: id }, function(err, result){
@@ -63,7 +45,6 @@ router.get('/:user_id', function(req, res){
  * @apiSuccess {String}   users.role
  * @apiSuccess {String}   users.avatarURL
  */
-function burp(){}
 router.get('/', function(req, res){
   req.en.db.collection('users').find(/*{ query }, { options }*/).toArray(function(err, result){
     res.status(200).json(result);
@@ -86,6 +67,7 @@ router.get('/', function(req, res){
  * @apiSuccess {String} avatarURL
  */
 router.put('/:user_id', function(req, res){
+
   var id = ObjectID(req.params.user_id);
   var data = req.body;
   req.en.db.collection('users').update({ _id: id }, data, function(err, result){
@@ -106,28 +88,39 @@ router.put('/:user_id', function(req, res){
  * @apiSuccess {String} role
  * @apiSuccess {String} avatarURL
  */
-router.post('/', parsePostData, function(req, res){
-  // TODO: validate req.body
-  var urlhash = murmurhash.v3(req.session.id);
+router.post('/', postDataValidator, function(req, res){
+  req.assert('email').isEmail();
+  req.assert('username').notEmpty();
+  req.assert('firstname').len(2, 20);
+  req.assert('lastname').len(2, 20);
 
-  var data = req.body;
-  var avatar = req.files.avatar;
-  if ( avatar ){
-    var tmpPath = avatar.path;
-    var userImageDir = req.en.CONSTANTS.DATA_DIR + '/' + urlhash + '/';
-    if ( !fs.existsSync(userImageDir) ){
-      fs.mkdirSync(userImageDir);
+  var errors = req.validationErrors();
+  if ( errors ){
+    res.status(400).json({ errors: errors });
+    return;
+  } else {
+    var data = req.body;
+    var record = {
+      _id: data.email,
+      username: data.username,
+      firstname: data.firstname,
+      lastname: data.lastname,
+      role: data.role || ''
     }
-    var filePath = userImageDir + avatar.originalFilename;
-    data.avatarURL = '/images/' + avatar.originalFilename;
-    fs.rename(tmpPath, filePath, function(err){
-      if (err){
-        res.status(err.status).end();
-      } else {
-        req.en.db.collection('users').insert(data, function(err, result){
-          res.status(201).json(result[0]);
-        });
+    var avatar = req.files.avatar;
+    if ( avatar ){
+      var tmpPath = avatar.path;
+      var fileName = avatar.originalFilename;
+      var userImageDir = req.en.CONSTANTS.DATA_DIR + '/' + record.username + '/';
+      var filePath = userImageDir + fileName;
+      if ( !fs.existsSync(userImageDir) ){
+        fs.mkdirSync(userImageDir);
       }
+      fs.renameSync(tmpPath, filePath);
+      record.avatarURL = record.username + '/images/' + fileName;
+    }
+    req.en.db.collection('users').insert(record, { w: 1 }, function(err, result){
+      res.status(201).json(result[0]);
     });
   }
 });
@@ -150,6 +143,22 @@ router.post('/', parsePostData, function(req, res){
 router.delete('/:user_id', function(req, res){
   req.en.db.collection('users').remove({ _id: 1 }, function(err, result){
     res.status(204).end();
+  });
+});
+
+router.get('/:username/images/:filename', function(req, res){
+  var log = req.en.logger;
+  var username = req.params.username;
+  var filename = req.params.filename;
+  var options = {
+    root: req.en.CONSTANTS.DATA_DIR + '/' + username + '/'
+  }
+  res.sendfile(filename, options, function(err){
+    if (err){
+      res.status(err.status).end();
+    } else {
+      log.info('Sending ' + username + '\'s ' + ' image ' + filename);
+    }
   });
 });
 

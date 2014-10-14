@@ -332,22 +332,6 @@ var Logger = (function _CreateLogger() {
     setInterval(function(){
         stream.emit('hi', {hello: 'world'});
     }, 1000);
-
-    var app = en.app;
-    app.get('/images/:file_id', function(req, res){
-        var urlhash = murmurhash(req.session.id);
-        var options = {
-            root: CONSTANTS.DATA_DIR + '/' + urlhash + '/'
-        }
-        res.sendfile(req.params.file_id, options, function(err){
-            console.log(req.params.file_id);
-            if (err){
-                res.status(err.status).end();
-            } else {
-                console.log("ok sent...");
-            }
-        });
-    });
 }); // end of main
 
 
