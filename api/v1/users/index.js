@@ -6,6 +6,8 @@ var router = express.Router();
 
 var postDataValidator = expressValidator();
 
+var usersCollection = 'users';
+
 /**
  * @api {get} /users/:user_id Find
  * @apiName Find
@@ -23,8 +25,13 @@ var postDataValidator = expressValidator();
  */
 router.get('/:user_id', function(req, res){
   var id = ObjectID(req.params.user_id);
-  req.en.db.collection('users').findOne({ _id: id }, function(err, result){
-    res.status(200).json(result);
+  var collection = req.en.db.collection(usersCollection);
+  collection.findOne({ _id: id }, function(err, result){
+    if (err){
+      res.status(400).send(err);
+    } else {
+      res.status(200).json(result);
+    }
   });
 });
 
@@ -43,8 +50,13 @@ router.get('/:user_id', function(req, res){
  * @apiSuccess {String}   users.avatarURL
  */
 router.get('/', function(req, res){
-  req.en.db.collection('users').find(/*{ query }, { options }*/).toArray(function(err, result){
-    res.status(200).json(result);
+  var collection = req.en.db.collection(usersCollection);
+  collection.find(/*{ query }, { options }*/).toArray(function(err, result){
+    if (err){
+      res.status(400).send(err);
+    } else {
+      res.status(200).json(result);
+    }
   });
 });
 
@@ -67,8 +79,13 @@ router.put('/:user_id', function(req, res){
 
   var id = ObjectID(req.params.user_id);
   var data = req.body;
-  req.en.db.collection('users').update({ _id: id }, data, function(err, result){
-    res.status(200).json(result);
+  var collection = req.en.db.collection(usersCollection);
+  collection.findAndModify({ _id: id }, [], { $set: data }, { w: 1, new: true }, function(err, result){
+    if (err){
+      res.status(err.statusCode).end();
+    } else {
+      res.status(200).json(result.value);
+    }
   });
 });
 
@@ -92,7 +109,7 @@ router.post('/', postDataValidator, function(req, res){
   req.assert('lastname').len(2, 20);
 
   var errors = req.validationErrors();
-  if ( errors ){
+  if (errors){
     res.status(400).json({ errors: errors });
     return;
   } else {
@@ -105,19 +122,24 @@ router.post('/', postDataValidator, function(req, res){
       role: data.role || ''
     }
     var avatar = req.files.avatar;
-    if ( avatar ){
+    if (avatar){
       var tmpPath = avatar.path;
       var fileName = avatar.originalFilename;
       var userImageDir = req.en.CONSTANTS.DATA_DIR + '/' + record.username + '/';
       var filePath = userImageDir + fileName;
-      if ( !fs.existsSync(userImageDir) ){
+      if (!fs.existsSync(userImageDir)){
         fs.mkdirSync(userImageDir);
       }
       fs.renameSync(tmpPath, filePath);
       record.avatarURL = record.username + '/images/' + fileName;
     }
-    req.en.db.collection('users').insert(record, { w: 1 }, function(err, result){
-      res.status(201).json(result[0]);
+    var collection = req.en.db.collection(usersCollection);
+    collection.insertOne(record, { w: 1 }, function(err, result){
+      if (err){
+        res.status(400).send(err);
+      } else {
+        res.status(201).json(result[0]);
+      }
     });
   }
 });
@@ -138,8 +160,13 @@ router.post('/', postDataValidator, function(req, res){
  * @apiSuccess {String} avatarURL
  */
 router.delete('/:user_id', function(req, res){
-  req.en.db.collection('users').remove({ _id: 1 }, function(err, result){
-    res.status(204).end();
+  var collection = req.en.db.collection(usersCollection);
+  collection.removeOne({ _id: 1 }, function(err, result){
+    if (err){
+      res.status(400).send(err);
+    } else {
+      res.status(204).end();
+    }
   });
 });
 
@@ -152,7 +179,7 @@ router.get('/:username/images/:filename', function(req, res){
   }
   res.sendfile(filename, options, function(err){
     if (err){
-      res.status(err.status).end();
+      res.status(400).send(err);
     } else {
       log.info('Sending ' + username + '\'s ' + ' image ' + filename);
     }
