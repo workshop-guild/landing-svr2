@@ -1,8 +1,5 @@
 var express = require('express');
-var ObjectID = require('mongodb').ObjectID;
 var fs = require('fs');
-var murmurhash = require('murmurhash');
-var multiparty = require('multiparty');
 var expressValidator = require('express-validator');
 
 var router = express.Router();
