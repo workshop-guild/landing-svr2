@@ -8,7 +8,32 @@ var postDataValidator = expressValidator();
 
 var guildsCollection = 'guilds';
 
-// Find
+/**
+ * @apiDefineStructure GuildID
+ * @apiParam {Number} guild_id Guild ID
+ */
+
+/**
+ * @apiDefineSuccessStructure GuildResourceObject
+ * @apiSuccess {String} guild.id   Guild ID
+ * @apiSuccess {String} guild.desc Short description
+ * @apiSuccess {String} guild.link Link to the guild's page
+ * @apiSuccess {String} guild.name Guild name
+ * @apiSuccess {String} guild.page Markdown to use for the guild's home page
+ * @apiSuccess {String} guild.pic  Link to the guild's index picture
+ */
+
+/**
+ * @api {get} /guilds/:guild_id Find
+ * @apiName Find
+ * @apiGroup Guilds
+ * @apiVersion 0.1.0
+ *
+ * @apiStructure GuildID
+ *
+ * @apiSuccess {Object} guilds A guild resource object
+ * @apiSuccessStructure GuildResourceObject
+ */
 router.get('/:guild_id', function(req, res){
   var id = req.params.guild_id;
   var collection = req.en.db.collection(guildsCollection);
@@ -16,12 +41,22 @@ router.get('/:guild_id', function(req, res){
     if (err){
       res.status(400).send(err);
     } else {
-      res.status(200).json(result);
+      result.id = result._id;
+      delete result._id;
+      res.status(200).json({ 'guilds': result });
     }
   });
 });
 
-// FindAll
+/**
+ * @api {get} /guilds FindAll
+ * @apiName FindAll
+ * @apiGroup Guilds
+ * @apiVersion 0.1.0
+ *
+ * @apiSuccess {Object[]} guilds List of guild resource objects
+ * @apiSuccessStructure GuildResourceObject
+ */
 router.get('/', function(req, res){
   var collection = req.en.db.collection(guildsCollection);
   // find(query, options)
@@ -34,12 +69,22 @@ router.get('/', function(req, res){
         doc.id = doc._id;
         delete doc._id;
       });
-      res.status(200).json({ 'guild': result });
+      res.status(200).json({ 'guilds': result });
     }
   });
 });
 
-// Create
+/**
+ * @api {post} /guilds Create
+ * @apiName Create
+ * @apiGroup Guilds
+ * @apiVersion 0.1.0
+ *
+ * @apiStructure GuildID
+ *
+ * @apiSuccess {Object} guilds A guild resource object
+ * @apiSuccessStructure GuildResourceObject
+ */
 router.post('/', postDataValidator, function(req, res){
   // TODO(Leon): fix _id, validate post data
   var data = req.body;
@@ -49,12 +94,29 @@ router.post('/', postDataValidator, function(req, res){
       // TODO(Leon): should parse err and let it make sense to API consumer
       res.status(400).send(err);
     } else {
-      res.status(201).json(result);
+      if (result.insertedCount === 1){
+        // TODO(Leon): Client should not be passing _id field
+        data.id = data._id;
+        delete data._id;
+        res.status(201).json({ 'guilds': data });
+      } else {
+        res.status(400).end();
+      }
     }
   });
 });
 
-// Update
+/**
+ * @api {put} /guilds/:guild_id Update
+ * @apiName Update
+ * @apiGroup Guilds
+ * @apiVersion 0.1.0
+ *
+ * @apiStructure GuildID
+ *
+ * @apiSuccess {Object} guilds A guild resource object
+ * @apiSuccessStructure GuildResourceObject
+ */
 router.put('/:guild_id', postDataValidator, function(req, res){
   // TODO(Leon): fix _id, validate post data
   var data = req.body;
@@ -64,12 +126,22 @@ router.put('/:guild_id', postDataValidator, function(req, res){
     if (err){
       res.status(400).send(err);
     } else {
-      res.status(200).json(result.value);
+      var json = result.value;
+      json.id = json._id;
+      delete json._id;
+      res.status(200).json({ 'guilds': json });
     }
   });
 });
 
-// Delete
+/**
+ * @api {delete} /guilds/:guild_id Delete
+ * @apiName Delete
+ * @apiGroup Guilds
+ * @apiVersion 0.1.0
+ *
+ * @apiStructure GuildID
+ */
 router.delete('/:guild_id', function(req, res){
   // TODO: validate this action
   var id = req.params.guild_id;
