@@ -6,16 +6,46 @@ define({ api: [
     "name": "Create",
     "group": "Guilds",
     "version": "0.1.0",
+    "parameter": {
+      "fields": {
+        "Parameter": [
+          {
+            "group": "Parameter",
+            "type": "Number",
+            "field": "id",
+            "optional": false,
+            "description": ""
+          }
+        ]
+      }
+    },
+    "examples": [
+      {
+        "title": "Create single resource",
+        "content": "Create single resource\n{\n \"guilds\": {\n   \"id\": \"7\",\n   \"name\": \"Workshop Guild\",\n   \"desc\": \"The most useful guild.\",\n   \"link\": \"http://workshop-guild.github.io\",\n   \"page\": \"\",\n   \"pic\": \"http://placehold.it/300x300\"\n }\n}\n",
+        "type": "json"
+      },
+      {
+        "title": "Create multiple resources",
+        "content": "Create multiple resources\n{\n \"guilds\": [{\n   \"id\": \"7\",\n   \"name\": \"Workshop Guild\",\n   \"desc\": \"The most useful guild.\",\n   \"link\": \"http://workshop-guild.github.io\",\n   \"page\": \"\",\n   \"pic\": \"http://placehold.it/300x300\"\n },{\n   \"id\": \"8\",\n   \"name\": \"Laundry Guild\",\n   \"desc\": \"The next most useful guild.\",\n   \"link\": \"\",\n   \"page\": \"\",\n   \"pic\": \"http://placehold.it/300x300\"\n }]\n}\n",
+        "type": "json"
+      }
+    ],
     "success": {
+      "examples": [
+        {
+          "title": "Single resource created",
+          "content": "Single resource created\nHTTP/1.1 200 OK\n{\n \"guilds\": {\n   \"id\": \"7\",\n   \"name\": \"Workshop Guild\",\n   \"desc\": \"The most useful guild.\",\n   \"link\": \"http://workshop-guild.github.io\",\n   \"page\": \"\",\n   \"pic\": \"http://placehold.it/300x300\"\n }\n}\n",
+          "type": "json"
+        },
+        {
+          "title": "Multiple resources created",
+          "content": "Multiple resources created\nHTTP/1.1 200 OK\n{\n \"guilds\": [{\n   \"id\": \"7\",\n   \"name\": \"Workshop Guild\",\n   \"desc\": \"The most useful guild.\",\n   \"link\": \"http://workshop-guild.github.io\",\n   \"page\": \"\",\n   \"pic\": \"http://placehold.it/300x300\"\n },{\n   \"id\": \"8\",\n   \"name\": \"Laundry Guild\",\n   \"desc\": \"The next most useful guild.\",\n   \"link\": \"\",\n   \"page\": \"\",\n   \"pic\": \"http://placehold.it/300x300\"\n }]\n}\n",
+          "type": "json"
+        }
+      ],
       "fields": {
         "Success 200": [
-          {
-            "group": "Success 200",
-            "type": "Object",
-            "field": "guilds",
-            "optional": false,
-            "description": "<p>A guild resource object</p>"
-          },
           {
             "group": "Success 200",
             "type": "String",
@@ -57,19 +87,6 @@ define({ api: [
             "field": "guild.pic",
             "optional": false,
             "description": "<p>Link to the guild&#39;s index picture</p>"
-          }
-        ]
-      }
-    },
-    "parameter": {
-      "fields": {
-        "Parameter": [
-          {
-            "group": "Parameter",
-            "type": "Number",
-            "field": "guild_id",
-            "optional": false,
-            "description": "<p>Guild ID</p>"
           }
         ]
       }

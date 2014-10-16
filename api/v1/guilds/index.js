@@ -1,6 +1,7 @@
 var express = require('express');
 var fs = require('fs');
 var expressValidator = require('express-validator');
+var async = require('async');
 
 var router = express.Router();
 
@@ -80,28 +81,130 @@ router.get('/', function(req, res){
  * @apiGroup Guilds
  * @apiVersion 0.1.0
  *
- * @apiStructure GuildID
+ * @apiParam {Number} id
  *
- * @apiSuccess {Object} guilds A guild resource object
+ * @apiExample Create single resource
+ * {
+ *   "guilds": {
+ *     "id": "7",
+ *     "name": "Workshop Guild",
+ *     "desc": "The most useful guild.",
+ *     "link": "http://workshop-guild.github.io",
+ *     "page": "",
+ *     "pic": "http://placehold.it/300x300"
+ *   }
+ * }
+ * @apiExample Create multiple resources
+ * {
+ *   "guilds": [{
+ *     "id": "7",
+ *     "name": "Workshop Guild",
+ *     "desc": "The most useful guild.",
+ *     "link": "http://workshop-guild.github.io",
+ *     "page": "",
+ *     "pic": "http://placehold.it/300x300"
+ *   },{
+ *     "id": "8",
+ *     "name": "Laundry Guild",
+ *     "desc": "The next most useful guild.",
+ *     "link": "",
+ *     "page": "",
+ *     "pic": "http://placehold.it/300x300"
+ *   }]
+ * }
+ *
+ *
+ * @apiSuccessExample Single resource created
+ * HTTP/1.1 200 OK
+ * {
+ *   "guilds": {
+ *     "id": "7",
+ *     "name": "Workshop Guild",
+ *     "desc": "The most useful guild.",
+ *     "link": "http://workshop-guild.github.io",
+ *     "page": "",
+ *     "pic": "http://placehold.it/300x300"
+ *   }
+ * }
+ *
+ * @apiSuccessExample Multiple resources created
+ * HTTP/1.1 200 OK
+ * {
+ *   "guilds": [{
+ *     "id": "7",
+ *     "name": "Workshop Guild",
+ *     "desc": "The most useful guild.",
+ *     "link": "http://workshop-guild.github.io",
+ *     "page": "",
+ *     "pic": "http://placehold.it/300x300"
+ *   },{
+ *     "id": "8",
+ *     "name": "Laundry Guild",
+ *     "desc": "The next most useful guild.",
+ *     "link": "",
+ *     "page": "",
+ *     "pic": "http://placehold.it/300x300"
+ *   }]
+ * }
+ *
  * @apiSuccessStructure GuildResourceObject
  */
+// this route is still WIP, it is currently taking a multipart/form-data,
+// should use application/json or application.vnd.api+json
+// I suppose file uploads should be done separately, and then file metadata
+// gets associated here?
 router.post('/', postDataValidator, function(req, res){
   // TODO(Leon): fix _id, validate post data
-  var data = req.body;
+  var data = req.body['guilds'];
+  data = JSON.parse(data); // this isn't json, its a string of json
+  if (data.constructor && data.constructor === {}.constructor){ // single resource
+    data = [data];
+  }
+  if (Array.isArray(data)){ // multiple resource
+    data.forEach(function(resource){
+      resource._id = resource.id;
+      delete resource.id;
+    });
+  }
+  // TODO(Leon): check for multiple resources
   var collection = req.en.db.collection(guildsCollection);
-  collection.insertOne(data, function(err, result){
+  collection.insertMany(data, function(err, result){
     if (err) {
       // TODO(Leon): should parse err and let it make sense to API consumer
       res.status(400).send(err);
     } else {
-      if (result.insertedCount === 1){
-        // TODO(Leon): Client should not be passing _id field
-        data.id = data._id;
-        delete data._id;
+      if (result.insertedCount === data.length){
+        data.forEach(function(resource){
+          resource.id = resource._id;
+          delete resource._id;
+        });
         res.status(201).json({ 'guilds': data });
       } else {
         res.status(400).end();
       }
+    }
+  });
+});
+
+// TODO(Leon): implement bulk update
+router.put('/bulk', function(req, res){
+  // the following is an incomplete implementation
+  var data = req.body['guilds'];
+  // if (ids.length === 1){ // single resource
+  //   data = [data];
+  // }
+  var collection = req.en.db.collection(guildsCollection);
+  var bulkOp = collection.initializeUnorderedBulkOp({useLegacyOps:true});
+  data.forEach(function(datum){
+    var id = datum.id;
+    delete datum.id;
+    bulkOp.find({ _id: id }).updateOne({ $set: datum });
+  });
+  bulkOp.execute({ w: 1 }, function(err, result){
+    if (err){
+      res.status(400).send(err);
+    } else {
+      res.status(200).send(result);
     }
   });
 });
@@ -119,7 +222,7 @@ router.post('/', postDataValidator, function(req, res){
  */
 router.put('/:guild_id', postDataValidator, function(req, res){
   // TODO(Leon): fix _id, validate post data
-  var data = req.body;
+  var data = req.body['guild'];
   var id = req.params.guild_id;
   var collection = req.en.db.collection(guildsCollection);
   collection.findAndModify({ _id: id }, [], { $set: data }, { w: 1, new: true }, function(err, result){
@@ -132,6 +235,22 @@ router.put('/:guild_id', postDataValidator, function(req, res){
       res.status(200).json({ 'guilds': json });
     }
   });
+});
+
+router.delete('/bulk', function(req, res){
+  var data = req.body['guilds']; // ids of resources to remove
+  var collection = req.en.db.collection(guildsCollection)
+  var bulkOp = collection.initializeUnorderedBulkOp({useLegacyOps:true});
+  data.forEach(function(resource_id){
+      bulkOp.find({ _id: resource_id }).remove({ _id: resource_id });
+    });
+    bulkOp.execute({ w: 1 }, function(err, result){
+      if (err){
+        res.status(400).send(err);
+      } else {
+        res.status(200).send({ 'guilds': data/*, 'debug': result */ });
+      }
+    });
 });
 
 /**
