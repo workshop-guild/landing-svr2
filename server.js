@@ -92,7 +92,7 @@ function parseSessionID(cookie) {
             return cookieParser.signedCookie(signedStr, SESSION_SECRET)
         }
     }
-    
+
 }
 
 
@@ -211,6 +211,8 @@ var Logger = (function _CreateLogger() {
         app.use(bodyParser.json());       // to support JSON-encoded bodies
         app.use(bodyParser.urlencoded()); // to support URL-encoded bodies
 
+        // CookieParser Middleware
+        app.use(cookieParser());
 
         // Session Middleware
         app.use(session({
@@ -220,17 +222,13 @@ var Logger = (function _CreateLogger() {
 
         // Set up session_id on request
         app.use(function (req, res, next) {
+            if (!req.session) {
+                Logger.error('Unable to get session from redis!');
+            }
             req.session.reload(function(err){
                 Logger.debug('Session Reload ' + err);
                 Logger.debug(req.session);
             });
-            if (!req.session) {
-                Logger.error('Redis Session Not Found!');
-            }
-            Logger.debug(req.headers);
-            if (req.headers.cookie) {
-                req.session.id = en.parseSessionID(req.headers.cookie);
-            }
             next();
         });
 
@@ -282,7 +280,7 @@ var Logger = (function _CreateLogger() {
     io.use(function(socket, next) {
         Logger.debug('-------io handshake-----------');
         var sessionID = parseSessionID(socket.request.headers.cookie);
-        console.log(socket.request.headers);
+        console.log(socket.request.headers.cookies);
         socket.session_id = sessionID;
         next();
     });
@@ -319,6 +317,3 @@ var Logger = (function _CreateLogger() {
     // Bind Game Loop
 
 }); // end of main
-
-
-
