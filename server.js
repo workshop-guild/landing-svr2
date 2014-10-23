@@ -59,10 +59,15 @@ var CONSTANTS = {
 };
 
 var HTTP_CODE = {
+    // Leon: I'm adding these codes to try and follow some of the jsonapi spec http://jsonapi.org/
+    OK           : 200, // use 200 when an entity is updated
+    CREATED      : 201, // use 201 when an entity is created
+    NO_CONTENT   : 204, // use when update is successful and resources attributes remain updated, also for delete
     BAD_REQUEST  : 400,
     UNAUTHORIZED : 401,
     FORBIDDEN    : 403,
     NOT_FOUND    : 404,
+    CONFLICT     : 409,
     ERROR        : 500
 }
 
@@ -92,7 +97,6 @@ function parseSessionID(cookie) {
             return cookieParser.signedCookie(signedStr, SESSION_SECRET)
         }
     }
-
 }
 
 
@@ -313,7 +317,17 @@ var Logger = (function _CreateLogger() {
         });
     });
 
-
-    // Bind Game Loop
-
+    // News Stream
+    var stream = io.of('/stream');
+    stream.on('connection', function(socket){
+        // console.log(socket.session_id + ' connected to /stream');
+        stream.emit('hi', {hello: 'initial'});
+        stream.emit('hi', {hello: 'five'});
+        stream.emit('hi', {hello: 'pieces'});
+        stream.emit('hi', {hello: 'of'});
+        stream.emit('hi', {hello: 'news'});
+    });
+    setInterval(function(){
+        stream.emit('hi', {hello: 'world'});
+    }, 1000);
 }); // end of main
