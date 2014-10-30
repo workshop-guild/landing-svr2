@@ -9,6 +9,7 @@ var $main = $('#main');
 
 $.get( "/chatapi")
 .done( function (url) {
+    console.log('websocket url: ' + url);
     chat = io.connect(url);
 
     chat.on('connect', function(msg) {
@@ -105,4 +106,3 @@ fileDrop.on('canceled', function(file, response) {
     console.log(file.name + ' canceled');
     console.log(response);
 });
-

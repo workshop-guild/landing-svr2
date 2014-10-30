@@ -26,7 +26,8 @@ var SERVER_ENV = require(__dirname + '/env.json'),
 
 var app = express();
 
-app.use(cors());
+
+app.use(cors({credentials:false}));
 
 var ipaddress  = process.env.OPENSHIFT_NODEJS_IP     || SERVER_ENV.web_url;
 var port       = process.env.OPENSHIFT_NODEJS_PORT   || SERVER_ENV.web_port;
@@ -101,6 +102,7 @@ function parseSessionID(cookie) {
 
 
 var Logger = (function _CreateLogger() {
+"use strict";
 
     function toJson(msg) {
         if ( typeof msg === 'object' ) {
@@ -248,6 +250,8 @@ var Logger = (function _CreateLogger() {
 
     routes(en);
 
+    Logger.debug('why stucked');
+
     //en.redis_main.flushall();
     en.redis_main.set('online', 0);
 
@@ -280,11 +284,13 @@ var Logger = (function _CreateLogger() {
 
     en.io = io;
 
+    Logger.info('Waiting for Socket IO Clients');
+
     // Create and Store Session CookieID
     io.use(function(socket, next) {
         Logger.debug('-------io handshake-----------');
         var sessionID = parseSessionID(socket.request.headers.cookie);
-        console.log(socket.request.headers.cookies);
+        //console.log(socket.request.headers);
         socket.session_id = sessionID;
         next();
     });
